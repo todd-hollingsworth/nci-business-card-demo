@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEPEAN — Digital Business Cards (Prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#F4F5F0;
+    --surface:#FFFFFF;
+    --surface-2:#FBFBF8;
+    --ink:#1C2430;
+    --ink-soft:#5B6472;
+    --ink-faint:#8B93A0;
+    --border:#E1DFD5;
+    --accent:#2F6F5E;
+    --accent-dark:#234F43;
+    --accent-soft:#E3EFEC;
+    --danger:#B3452F;
+    --danger-soft:#F6E7E2;
+    --warn:#9A6B1F;
+    --warn-soft:#F5EBD8;
+    --ok:#2F6F5E;
+    --ok-soft:#E3EFEC;
+    --gold:#EFA227;
+    --radius-s:6px;
+    --radius:10px;
+    --radius-l:16px;
+    --shadow:0 1px 2px rgba(28,36,48,0.06), 0 8px 24px -12px rgba(28,36,48,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  button{font-family:inherit;font-size:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:inherit;}
+  a{color:inherit;}
+  ::selection{background:var(--accent-soft);}
+
+  /* ---------- Prototype banner ---------- */
+  #protoBar{
+    background:var(--ink);
+    color:#EDEDE6;
+    font-size:12px;
+    padding:7px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    position:sticky;
+    top:0;
+    z-index:500;
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.01em;
+  }
+  #protoBar button{
+    background:none;border:1px solid rgba(255,255,255,0.35);color:#EDEDE6;
+    padding:3px 10px;border-radius:20px;font-size:11px;
+  }
+  #protoBar button:hover{background:rgba(255,255,255,0.12);}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:11px 18px; border-radius:8px;
+    font-size:13px; box-shadow:var(--shadow); opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease; z-index:900; max-width:360px;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Login ---------- */
+  #loginScreen{
+    min-height:calc(100vh - 34px);
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 20px;
+  }
+  .loginWrap{
+    display:grid; grid-template-columns:1.05fr 1fr; max-width:900px; width:100%;
+    background:var(--surface); border-radius:var(--radius-l); overflow:hidden; box-shadow:var(--shadow);
+    border:1px solid var(--border);
+  }
+  .loginBrand{
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.10), transparent 40%),
+      radial-gradient(circle at 80% 75%, rgba(255,255,255,0.08), transparent 45%),
+      linear-gradient(155deg, #1C2430 0%, #2F6F5E 130%);
+    color:#F4F5F0; padding:44px 38px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .loginBrand .mark{width:40px;height:40px;display:flex;align-items:center;justify-content:flex-start;}
+  .loginBrand .mark img{height:40px;width:auto;display:block;}
+  .loginBrand h1{font-size:29px;color:#fff;margin-top:26px;line-height:1.15;}
+  .loginBrand p{color:#D9E4DF; max-width:30ch; margin-top:14px; font-size:13.5px;}
+  .badgeRow{display:flex;gap:10px;margin-top:32px;}
+  .miniBadge{width:44px;height:58px;border-radius:6px;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.25);}
+  .loginForm{padding:44px 40px; display:flex; flex-direction:column;}
+  .loginForm h2{font-size:21px;}
+  .loginForm .sub{color:var(--ink-soft); font-size:13px; margin-top:6px; margin-bottom:26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; font-weight:500;}
+  .field input, .field select{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-s);
+    background:var(--surface-2); color:var(--ink); outline:none;
+  }
+  .field input:focus, .field select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .btn{
+    border:none; border-radius:var(--radius-s); padding:10px 16px; font-weight:600; font-size:13.5px;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:filter .15s ease, background .15s ease;
+  }
+  .btn:hover{filter:brightness(0.95);}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark); filter:none;}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--border);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-danger-ghost{background:transparent;color:var(--danger);border:1px solid var(--danger-soft);}
+  .btn-danger-ghost:hover{background:var(--danger-soft);}
+  .btn-sm{padding:6px 11px; font-size:12.5px;}
+  .btn-block{width:100%;}
+  .demoRow{display:flex; gap:10px; margin-top:6px;}
+  .demoCard{
+    flex:1; border:1px dashed var(--border); border-radius:var(--radius-s); padding:11px; text-align:left; background:var(--surface-2);
+  }
+  .demoCard:hover{border-color:var(--accent); background:var(--accent-soft);}
+  .demoCard .role{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); font-family:'IBM Plex Mono',monospace;}
+  .demoCard .who{font-weight:600; margin-top:3px; font-size:13px;}
+  .divider{display:flex; align-items:center; gap:10px; color:var(--ink-faint); font-size:12px; margin:20px 0;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* ---------- App shell ---------- */
+  #appShell{display:none; min-height:calc(100vh - 34px);}
+  #appShell.active{display:flex;}
+  .sidebar{
+    width:222px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:20px 14px; gap:2px;
+  }
+  .sbHead{display:flex; align-items:center; gap:9px; padding:4px 8px 18px;}
+  .sbHead .mark{width:30px;height:30px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sbHead .mark img{width:16px;height:16px;object-fit:contain;}
+  .sbHead .org{font-weight:600; font-size:13.5px; line-height:1.2;}
+  .sbHead .who{font-size:11px; color:var(--ink-faint);}
+  .navItem{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--radius-s);
+    color:var(--ink-soft); font-size:13.5px; font-weight:500; cursor:pointer; border:none; background:none; text-align:left; width:100%;
+  }
+  .navItem:hover{background:var(--surface-2); color:var(--ink);}
+  .navItem.active{background:var(--accent-soft); color:var(--accent-dark);}
+  .navItem .dot{width:6px;height:6px;border-radius:50%;background:var(--ink-faint);flex-shrink:0;}
+  .navItem.active .dot{background:var(--accent);}
+  .navPhase2{margin-left:auto; font-size:9.5px; font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); background:var(--surface-2); border:1px solid var(--border); padding:1px 5px; border-radius:20px;}
+  .sbFoot{margin-top:auto; padding-top:14px; border-top:1px solid var(--border);}
+  .avatarRow{display:flex; align-items:center; gap:9px; padding:6px 8px;}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0;}
+  .avatarRow .name{font-size:12.5px; font-weight:600;}
+  .avatarRow .role{font-size:11px; color:var(--ink-faint);}
+  .logoutBtn{width:100%; margin-top:8px; text-align:left; background:none; border:none; color:var(--ink-soft); font-size:12.5px; padding:7px 8px; border-radius:var(--radius-s);}
+  .logoutBtn:hover{background:var(--surface-2); color:var(--danger);}
+
+  .main{flex:1; padding:28px 34px; overflow-y:auto; max-height:calc(100vh - 34px);}
+  .pageHead{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; gap:14px; flex-wrap:wrap;}
+  .pageHead h2{font-size:24px;}
+  .pageHead .sub{color:var(--ink-soft); font-size:13px; margin-top:4px;}
+  .phase2Banner{
+    background:var(--warn-soft); color:var(--warn); border:1px solid #E6D6AE; padding:10px 14px; border-radius:var(--radius-s);
+    font-size:12.5px; margin-bottom:20px; display:flex; align-items:center; gap:8px;
+  }
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);}
+  .cardPad{padding:20px 22px;}
+
+  /* toolbar */
+  .toolbar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;}
+  .toolbar input[type=text], .toolbar select{
+    padding:8px 11px; border:1px solid var(--border); border-radius:var(--radius-s); background:var(--surface); min-width:150px;
+  }
+  .bulkBar{
+    display:none; align-items:center; gap:10px; background:var(--accent-soft); border:1px solid #C6DED8; border-radius:var(--radius-s);
+    padding:8px 12px; margin-bottom:12px; font-size:12.5px; color:var(--accent-dark);
+  }
+  .bulkBar.show{display:flex;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; padding:9px 12px; color:var(--ink-faint); font-weight:600; font-size:11.5px;
+    border-bottom:1px solid var(--border); cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  thead th:hover{color:var(--ink);}
+  tbody td{padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  .cellUser{display:flex; align-items:center; gap:9px;}
+  .miniAv{width:28px;height:28px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+  .rowName{font-weight:600;}
+  .rowEmail{color:var(--ink-faint); font-size:12px;}
+
+  .badge{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:600;}
+  .badge-active{background:var(--ok-soft); color:var(--ok);}
+  .badge-invited{background:var(--warn-soft); color:var(--warn);}
+  .badge-deactivated{background:var(--danger-soft); color:var(--danger);}
+  .divBadge{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500;}
+  .divDot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+
+  .actionsCell{display:flex; gap:6px;}
+  .iconBtn{background:none; border:1px solid var(--border); border-radius:var(--radius-s); padding:5px 9px; font-size:11.5px; color:var(--ink-soft);}
+  .iconBtn:hover{background:var(--surface-2); color:var(--ink); border-color:var(--ink-faint);}
+
+  /* division grid */
+  .divGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;}
+  .divCard{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:transform .12s ease, box-shadow .12s ease; position:relative;}
+  .divCard:hover{box-shadow:var(--shadow); transform:translateY(-1px);}
+  .divCardTop{height:64px; position:relative;}
+  .divCardLogo{
+    position:absolute; top:12px; right:12px; width:40px; height:40px; border-radius:8px; background:#fff;
+    display:flex; align-items:center; justify-content:center; padding:5px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.12);
+  }
+  .divCardLogo img{max-width:100%; max-height:100%; object-fit:contain;}
+  .divCardBody{padding:16px; border-radius:0 0 var(--radius) var(--radius);}
+  .divCardBody h4{font-size:15px;}
+  .divCardBody .meta{color:var(--ink-faint); font-size:12px; margin-top:4px;}
+  .divCardBody .count{margin-top:10px; font-size:12px; color:var(--ink-soft);}
+
+  /* detail slide-over */
+  .overlay{position:fixed; inset:0; background:rgba(28,36,48,0.35); display:none; align-items:stretch; justify-content:flex-end; z-index:600;}
+  .overlay.show{display:flex;}
+  .panel{
+    width:min(480px, 92vw); background:var(--surface); height:100%; overflow-y:auto; box-shadow:-8px 0 30px rgba(0,0,0,0.12);
+    padding:26px 26px 40px; animation:slideIn .18s ease;
+  }
+  @keyframes slideIn{from{transform:translateX(24px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+  .panelHead{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;}
+  .panelHead h3{font-size:19px;}
+  .closeX{background:none; border:none; font-size:20px; color:var(--ink-faint); line-height:1;}
+  .closeX:hover{color:var(--ink);}
+  .sectionLbl{font-size:11.5px; font-weight:600; color:var(--ink-faint); margin:22px 0 10px; text-transform:none; letter-spacing:0.01em;}
+  .sectionLbl:first-child{margin-top:0;}
+  .fieldRow{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .lockNote{font-size:11.5px; color:var(--ink-faint); margin-top:5px;}
+  .auditItem{padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px;}
+  .auditItem:last-child{border-bottom:none;}
+  .auditItem .who{font-weight:600;}
+  .auditItem .when{color:var(--ink-faint); font-size:11px; margin-top:2px;}
+
+  /* division detail */
+  .bgGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:6px;}
+  .bgTile{border-radius:var(--radius-s); overflow:hidden; border:2px solid transparent; position:relative;}
+  .bgTile.isDefault{border-color:var(--accent);}
+  .bgSwatch{height:74px; width:100%;}
+  .bgTileFoot{display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface-2); font-size:10.5px;}
+  .bgTileFoot button{background:none; border:none; font-size:10px; color:var(--ink-soft); font-weight:600;}
+  .bgTileFoot button:hover{color:var(--accent-dark);}
+  .defStar{position:absolute; top:5px; right:5px; background:var(--accent); color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; font-weight:700;}
+
+  /* analytics */
+  .statGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;}
+  .statCard{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px;}
+  .statCard .num{font-family:'Fraunces',serif; font-size:30px; font-weight:600;}
+  .statCard .lbl{color:var(--ink-soft); font-size:12.5px; margin-top:4px;}
+
+  /* ---------- User dashboard ---------- */
+  .userGrid{display:grid; grid-template-columns:1.15fr 1fr; gap:22px; align-items:start;}
+  @media(max-width:980px){.userGrid{grid-template-columns:1fr;}}
+  .formSectionTitle{font-size:15px; margin-bottom:2px;}
+  .formSectionSub{color:var(--ink-soft); font-size:12.5px; margin-bottom:16px;}
+  .phoneRow{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .photoRow{display:flex; align-items:center; gap:14px; margin-bottom:20px;}
+  .photoBig{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;flex-shrink:0;}
+  .lockedField{background:var(--surface-2); color:var(--ink-faint); border:1px solid var(--border); border-radius:var(--radius-s); padding:10px 12px; font-size:13px;}
+  .bgPickRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+  .bgPick{width:64px; height:48px; border-radius:7px; border:2px solid transparent; cursor:pointer; position:relative;}
+  .bgPick.selected{border-color:var(--accent);}
+  .bgPick .check{position:absolute; top:3px; right:3px; background:var(--accent); color:#fff; width:14px; height:14px; border-radius:50%; font-size:9px; display:flex; align-items:center; justify-content:center;}
+
+  /* card preview */
+  .previewStickyWrap{position:sticky; top:14px;}
+  .cardPreviewFrame{border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; background:var(--surface); box-shadow:var(--shadow);}
+  .digitalCard{padding:0;}
+  .cardCaption{font-weight:700; font-size:13.5px; color:var(--ink); margin-bottom:10px; padding-left:2px;}
+  .dcBg{height:190px; position:relative; background-size:cover; background-position:center;}
+  .dcPhoto{
+    position:absolute; bottom:-30px; left:20px; width:64px; height:64px; border-radius:50%; border:4px solid #fff;
+    background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;
+    box-shadow:0 2px 6px rgba(0,0,0,0.18);
+  }
+  .dcBody{padding:44px 22px 24px;}
+  .dcNameRow{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .dcBody h3{font-size:21px;}
+  .dcPronouns{font-size:12.5px; color:var(--ink-faint); font-weight:500;}
+  .dcBody .title{color:var(--ink-soft); font-size:14px; margin-top:3px;}
+  .dcRows{margin-top:14px; display:flex; flex-direction:column; gap:6px;}
+  .dcRow{font-size:14px; color:var(--ink); font-weight:500;}
+  .dcSocialRow{display:flex; gap:10px; margin-top:16px;}
+  .dcSocialBtn{
+    width:34px; height:34px; border-radius:50%; background:var(--surface-2); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--ink); flex-shrink:0;
+  }
+  .dcActions{margin-top:20px;}
+  .dcSaveBtn{
+    width:100%; background:var(--gold); color:#fff; border:none; border-radius:30px; padding:13px 18px;
+    font-weight:700; font-size:14.5px; display:flex; align-items:center; justify-content:center; gap:9px;
+  }
+  .dcSaveBtn:hover{filter:brightness(0.96);}
+  .noRows{color:var(--ink-faint); font-size:12px; font-style:italic;}
+
+  .qrBox{display:flex; flex-direction:column; align-items:center; padding:20px; border-top:1px dashed var(--border); margin-top:18px;}
+  .qrBox .qrTargetUrl{font-size:11px; color:var(--ink-faint); margin-top:8px; font-family:'IBM Plex Mono',monospace; word-break:break-all; text-align:center;}
+
+  .publicOverlay{position:fixed; inset:0; background:#F4F5F0; z-index:800; display:none; overflow-y:auto;}
+  .publicOverlay.show{display:block;}
+  .publicTopBar{display:flex; justify-content:space-between; align-items:center; padding:14px 22px; border-bottom:1px solid var(--border); background:var(--surface);}
+  .publicWrap{max-width:420px; margin:34px auto; padding:0 16px;}
+  .noLoginNote{text-align:center; color:var(--ink-faint); font-size:11.5px; margin-top:16px;}
+
+  @media(max-width:760px){
+    .sidebar{width:64px; padding:16px 8px;}
+    .sidebar .org, .sidebar .who, .navItem span.lbl, .avatarRow .name, .avatarRow .role, .navPhase2{display:none;}
+    .navItem{justify-content:center;}
+    .main{padding:20px 16px;}
+    .loginWrap{grid-template-columns:1fr;}
+    .loginBrand{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="protoBar">
+  <span>PROTOTYPE — UI DEMO ONLY. No accounts, uploads, or emails are real. Nothing saves after refresh.</span>
+</div>
+<div id="toast"></div>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="loginWrap">
+    <div class="loginBrand">
+      <div>
+        <div class="mark"><img src="assets/nepean_icon.png" alt="NEPEAN"></div>
+        <h1>One login. Every card, always current.</h1>
+        <p>NEPEAN employee digital business card platform.</p>
+      </div>
+      <div>
+        <img src="assets/nepean_full_lockup.png" alt="NEPEAN" style="height:34px; width:auto; opacity:0.92;">
+        <p style="margin-top:14px; font-size:11.5px; color:#B9CBC5;">3 divisions · 9 employees · demo data</p>
+      </div>
+    </div>
+    <div class="loginForm">
+      <h2>Sign in</h2>
+      <div class="sub">Accounts are provisioned by an admin — there's no public sign-up.</div>
+      <div class="field">
+        <label>Work email</label>
+        <input type="text" id="loginEmail" placeholder="you@nepean.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="handleLogin()">Log in</button>
+
+      <div class="divider">or try the demo</div>
+      <div class="demoRow">
+        <button class="demoCard" onclick="demoLogin('admin')">
+          <div class="role">Admin</div>
+          <div class="who">Priya Nair</div>
+        </button>
+        <button class="demoCard" onclick="demoLogin('user')">
+          <div class="role">Employee</div>
+          <div class="who">Marcus Lin</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="appShell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main" id="main"></div>
+</div>
+
+<!-- ============ SLIDE-OVER PANEL (user detail, division detail) ============ -->
+<div class="overlay" id="overlay">
+  <div class="panel" id="panelContent"></div>
+</div>
+
+<!-- ============ PUBLIC CARD VIEW ============ -->
+<div class="publicOverlay" id="publicOverlay">
+  <div class="publicTopBar">
+    <strong style="font-family:'Fraunces',serif; font-size:15px;">Public card preview</strong>
+    <button class="btn btn-ghost btn-sm" onclick="closePublicView()">Close preview</button>
+  </div>
+  <div class="publicWrap" id="publicCardWrap"></div>
+</div>
+
+<script>
+/* =====================================================================
+   DEMO DATA (all in-memory — nothing persists, no localStorage, no DB)
+   ===================================================================== */
+const DIVISIONS = [
+  {
+    id:'d1', name:'Alpine', color:'#1E9F5A', logoImg:'assets/alpine_logo.png',
+    hq:'Wacol, QLD', language:'English',
+    backgrounds:[
+      {id:'bg1', name:'Westshore Stacker', css:"center/cover no-repeat url(assets/alpine_bg_westshore.jpg)"},
+      {id:'bg2', name:'Coal Terminal Aerial', css:"center/cover no-repeat url(assets/alpine_bg_aerial.jpg)"},
+      {id:'bg3', name:'PWCS Shiploader', css:"center/cover no-repeat url(assets/alpine_bg_shiploader.jpg)"}
+    ],
+    defaultBg:'bg1'
+  },
+  {
+    id:'d2', name:'NEPEAN Conveyors Inc', color:'#1A1A1A', logoImg:'assets/nepean_conveyors_logo.png',
+    hq:'Newcastle, NSW', language:'English',
+    backgrounds:[
+      {id:'bg4', name:'Atlas CV4 — Port Hedland', css:"center/cover no-repeat url(assets/nepean_conveyors_bg_atlas.jpg)"},
+      {id:'bg5', name:'Wyndham Iron Ore Site', css:"center/cover no-repeat url(assets/nepean_conveyors_bg_wyndham.jpg)"},
+      {id:'bg6', name:'Narrabri by Night', css:"center/cover no-repeat url(assets/nepean_conveyors_bg_narrabri.jpg)"}
+    ],
+    defaultBg:'bg4'
+  },
+  {
+    id:'d3', name:'PROK', color:'#F5B400', logoImg:'assets/prok_logo.png',
+    hq:'Perth, WA', language:'English',
+    backgrounds:[
+      {id:'bg7', name:'Innovation at Work', css:"center/cover no-repeat url(assets/prok_bg_innovation.jpg)"},
+      {id:'bg8', name:'Conveyor Pulley', css:"center/cover no-repeat url(assets/prok_bg_pulley.jpg)"},
+      {id:'bg9', name:'Mountain Site', css:"center/cover no-repeat url(assets/prok_bg_site.jpg)"}
+    ],
+    defaultBg:'bg7'
+  }
+];
+
+const ADMIN = { id:'a1', name:'Priya Nair', email:'priya.nair@nepean.com', role:'Admin', initials:'PN' };
+
+let USERS = [
+  { id:'u1', name:'Marcus Lin', email:'marcus.lin@nepean.com', division:'d2', title:'Account Director', pronouns:'he/him',
+    role:'User', status:'Active', created:'2026-01-14',
+    phones:{office:'+61 2 4023 5588', desk:'', cell:'+61 412 345 678'},
+    address:'12 Industrial Dr, Newcastle, NSW', bgId:null, initials:'ML' },
+  { id:'u2', name:'Ada Ferreira', email:'ada.ferreira@nepean.com', division:'d1', title:'Sales Director', pronouns:'she/her',
+    role:'User', status:'Active', created:'2025-11-02',
+    phones:{office:'+61 7 3271 4400', desk:'+61 7 3271 4401', cell:''},
+    address:'45 Boundary Rd, Wacol, QLD', bgId:'bg2', initials:'AF' },
+  { id:'u3', name:'Tomas Novak', email:'tomas.novak@nepean.com', division:'d3', title:'Regional Sales Manager', pronouns:'',
+    role:'User', status:'Active', created:'2025-09-19',
+    phones:{office:'', desk:'', cell:'+61 438 221 900'},
+    address:'8 Anvil Way, Perth, WA', bgId:null, initials:'TN' },
+  { id:'u4', name:'Sana Iqbal', email:'sana.iqbal@nepean.com', division:'d2', title:'Service Coordinator', pronouns:'',
+    role:'User', status:'Invited', created:'2026-02-27',
+    phones:{office:'', desk:'', cell:''}, address:'12 Industrial Dr, Newcastle, NSW', bgId:null, initials:'SI' },
+  { id:'u5', name:'Owen Marsh', email:'owen.marsh@nepean.com', division:'d1', title:'Operations Manager', pronouns:'he/him',
+    role:'Admin', status:'Active', created:'2025-06-08',
+    phones:{office:'+61 7 3271 4410', desk:'', cell:'+61 447 118 220'}, address:'45 Boundary Rd, Wacol, QLD', bgId:null, initials:'OM' },
+  { id:'u6', name:'Yuki Tanaka', email:'yuki.tanaka@nepean.com', division:'d3', title:'Marketing Coordinator', pronouns:'',
+    role:'User', status:'Active', created:'2025-12-11',
+    phones:{office:'', desk:'+61 8 9419 3300', cell:''}, address:'8 Anvil Way, Perth, WA', bgId:'bg8', initials:'YT' },
+  { id:'u7', name:'Priya Nair', email:'priya.nair@nepean.com', division:'d1', title:'People & Culture Manager', pronouns:'she/her',
+    role:'Admin', status:'Active', created:'2025-03-01',
+    phones:{office:'+61 7 3271 4420', desk:'', cell:''}, address:'45 Boundary Rd, Wacol, QLD', bgId:null, initials:'PN' },
+  { id:'u8', name:'Elias Kroon', email:'elias.kroon@nepean.com', division:'d2', title:'Warehouse Supervisor', pronouns:'',
+    role:'User', status:'Deactivated', created:'2024-10-04',
+    phones:{office:'', desk:'', cell:''}, address:'12 Industrial Dr, Newcastle, NSW', bgId:null, initials:'EK' },
+  { id:'u9', name:'Corinne Beaulieu', email:'corinne.beaulieu@nepean.com', division:'d3', title:'Graduate Engineer', pronouns:'',
+    role:'User', status:'Invited', created:'2026-03-01',
+    phones:{office:'', desk:'', cell:''}, address:'8 Anvil Way, Perth, WA', bgId:null, initials:'CB' }
+];
+
+let AUDIT = [
+  { actor:'Priya Nair', target:'Marcus Lin', action:'Changed title', field:'title', old:'Account Manager', new:'Account Director', ts:'2026-08-30 09:14' },
+  { actor:'Owen Marsh', target:'Ada Ferreira', action:'Reset password', field:'password', old:'—', new:'—', ts:'2026-08-22 15:02' },
+  { actor:'Priya Nair', target:'Sana Iqbal', action:'Created account', field:'—', old:'—', new:'—', ts:'2026-02-27 11:40' },
+  { actor:'Priya Nair', target:'Elias Kroon', action:'Deactivated account', field:'status', old:'Active', new:'Deactivated', ts:'2025-12-19 08:03' }
+];
+
+let COLLECTED_CONTACTS = [
+  { name:'Helena Brandt', company:'Portside Freight Co.', source:'Scan', by:'Marcus Lin', division:'Nordal Logistics', status:'Sent' },
+  { name:'Deja Okoye', company:'Riverfront Clinic', source:'vCard', by:'Ada Ferreira', division:'Meridian Health', status:'Sent' },
+  { name:'Marco Villanueva', company:'Studio Reyes', source:'Manual', by:'Tomas Novak', division:'Fenwick & Vale', status:'Pending' },
+  { name:'Grace Lindqvist', company:'BalticRail', source:'CSV', by:'Marcus Lin', division:'Nordal Logistics', status:'Failed' }
+];
+
+/* =====================================================================
+   APP STATE
+   ===================================================================== */
+let session = null;        // 'admin' | 'user'
+let currentUserId = 'u1';  // which employee is "logged in" for the User view
+let adminNav = 'users';
+let userNav = 'profile';
+let usersSort = {key:'name', dir:1};
+let usersFilter = {q:'', division:'all', status:'all'};
+let selectedUserIds = new Set();
+let openPanel = null; // {type:'user'|'division', id}
+
+function divisionById(id){ return DIVISIONS.find(d=>d.id===id); }
+function userById(id){ return USERS.find(u=>u.id===id); }
+
+function initialsColor(str){
+  // stable pastel-ish color from string, used for table avatars
+  let hash=0; for(let i=0;i<str.length;i++){hash = str.charCodeAt(i) + ((hash<<5)-hash);}
+  const hue = Math.abs(hash)%360;
+  return `hsl(${hue} 38% 42%)`;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* =====================================================================
+   LOGIN
+   ===================================================================== */
+function demoLogin(role){
+  document.getElementById('loginEmail').value = role==='admin' ? ADMIN.email : userById('u1').email;
+  document.getElementById('loginPassword').value = '••••••••';
+  session = role;
+  if(role==='user') currentUserId = 'u1';
+  enterApp();
+}
+function handleLogin(){
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  if(!email){ toast('Enter an email or use a demo login below.'); return; }
+  if(email === ADMIN.email){ session='admin'; enterApp(); return; }
+  const match = USERS.find(u=>u.email.toLowerCase()===email);
+  if(match){ session='user'; currentUserId = match.id; enterApp(); return; }
+  toast("No account found — try one of the demo logins below.");
+}
+function enterApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').classList.add('active');
+  adminNav = 'users'; userNav = 'profile';
+  renderShell();
+}
+function logout(){
+  session = null;
+  document.getElementById('appShell').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginEmail').value=''; document.getElementById('loginPassword').value='';
+  closePanel();
+}
+
+/* =====================================================================
+   SHELL / NAV
+   ===================================================================== */
+function renderShell(){
+  renderSidebar();
+  if(session==='admin') renderAdminMain(); else renderUserMain();
+}
+
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  if(session==='admin'){
+    sb.innerHTML = `
+      <div class="sbHead">
+        <div class="mark"><img src="assets/nepean_icon.png" alt="NEPEAN"></div>
+        <div><div class="org">NEPEAN</div><div class="who">Admin console</div></div>
+      </div>
+      ${navBtn('users','Users', adminNav)}
+      ${navBtn('divisions','Divisions', adminNav)}
+      ${navBtn('analytics','Analytics', adminNav, true)}
+      ${navBtn('contacts','Collected Contacts', adminNav, true)}
+      ${navBtn('crm','CRM Settings', adminNav, true)}
+      <div class="sbFoot">
+        <div class="avatarRow">
+          <div class="avatar">${ADMIN.initials}</div>
+          <div><div class="name">${ADMIN.name}</div><div class="role">Admin</div></div>
+        </div>
+        <button class="logoutBtn" onclick="logout()">Log out</button>
+      </div>
+    `;
+  } else {
+    const u = userById(currentUserId);
+    sb.innerHTML = `
+      <div class="sbHead">
+        <div class="mark"><img src="assets/nepean_icon.png" alt="NEPEAN"></div>
+        <div><div class="org">NEPEAN</div><div class="who">${divisionById(u.division).name}</div></div>
+      </div>
+      ${navBtnUser('profile','Edit profile')}
+      ${navBtnUser('card','My card & QR')}
+      <div class="sbFoot">
+        <div class="avatarRow">
+          <div class="avatar">${u.initials}</div>
+          <div><div class="name">${u.name}</div><div class="role">${u.title}</div></div>
+        </div>
+        <button class="logoutBtn" onclick="logout()">Log out</button>
+      </div>
+    `;
+  }
+}
+function navBtn(key,label,current,phase2){
+  return `<button class="navItem ${current===key?'active':''}" onclick="setAdminNav('${key}')">
+    <span class="dot"></span><span class="lbl">${label}</span>${phase2?'<span class="navPhase2">Phase 2</span>':''}
+  </button>`;
+}
+function navBtnUser(key,label){
+  return `<button class="navItem ${userNav===key?'active':''}" onclick="setUserNav('${key}')">
+    <span class="dot"></span><span class="lbl">${label}</span>
+  </button>`;
+}
+function setAdminNav(key){ adminNav=key; renderShell(); }
+function setUserNav(key){ userNav=key; renderShell(); }
+
+/* =====================================================================
+   ADMIN — USERS
+   ===================================================================== */
+function renderAdminMain(){
+  const main = document.getElementById('main');
+  if(adminNav==='users') return renderUsersPage(main);
+  if(adminNav==='divisions') return renderDivisionsPage(main);
+  if(adminNav==='analytics') return renderAnalyticsPage(main);
+  if(adminNav==='contacts') return renderContactsPage(main);
+  if(adminNav==='crm') return renderCrmPage(main);
+}
+
+function getFilteredSortedUsers(){
+  let list = USERS.filter(u=>{
+    const q = usersFilter.q.toLowerCase();
+    const matchesQ = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const matchesDiv = usersFilter.division==='all' || u.division===usersFilter.division;
+    const matchesStatus = usersFilter.status==='all' || u.status===usersFilter.status;
+    return matchesQ && matchesDiv && matchesStatus;
+  });
+  list.sort((a,b)=>{
+    let av,bv;
+    if(usersSort.key==='name'){ av=a.name; bv=b.name; }
+    else { av=a.created; bv=b.created; }
+    return av<bv ? -1*usersSort.dir : av>bv ? 1*usersSort.dir : 0;
+  });
+  return list;
+}
+
+function renderUsersPage(main){
+  const list = getFilteredSortedUsers();
+  main.innerHTML = `
+    <div class="pageHead">
+      <div><h2>Users</h2><div class="sub">${USERS.length} total across ${DIVISIONS.length} divisions</div></div>
+      <button class="btn btn-primary" onclick="toast('This would open the \\'Add user\\' form (name, email, division, title, role).')">+ Add user</button>
+    </div>
+    <div class="toolbar">
+      <input type="text" placeholder="Search name or email…" value="${usersFilter.q}" oninput="usersFilter.q=this.value; renderUsersPage(document.getElementById('main'))">
+      <select onchange="usersFilter.division=this.value; renderUsersPage(document.getElementById('main'))">
+        <option value="all" ${usersFilter.division==='all'?'selected':''}>All divisions</option>
+        ${DIVISIONS.map(d=>`<option value="${d.id}" ${usersFilter.division===d.id?'selected':''}>${d.name}</option>`).join('')}
+      </select>
+      <select onchange="usersFilter.status=this.value; renderUsersPage(document.getElementById('main'))">
+        <option value="all" ${usersFilter.status==='all'?'selected':''}>All statuses</option>
+        <option ${usersFilter.status==='Active'?'selected':''}>Active</option>
+        <option ${usersFilter.status==='Invited'?'selected':''}>Invited</option>
+        <option ${usersFilter.status==='Deactivated'?'selected':''}>Deactivated</option>
+      </select>
+    </div>
+    <div class="bulkBar ${selectedUserIds.size?'show':''}" id="bulkBar">
+      <span>${selectedUserIds.size} selected</span>
+      <button class="btn btn-ghost btn-sm" onclick="bulkAction('invite')">Resend invite</button>
+      <button class="btn btn-danger-ghost btn-sm" onclick="bulkAction('deactivate')">Deactivate</button>
+      <button class="btn btn-ghost btn-sm" onclick="bulkAction('export')">Export CSV</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th style="width:30px;"><input type="checkbox" onchange="toggleAllUsers(this.checked)" ${selectedUserIds.size===list.length && list.length?'checked':''}></th>
+          <th onclick="sortUsers('name')">Name ${usersSort.key==='name'?(usersSort.dir>0?'↑':'↓'):''}</th>
+          <th>Division</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th onclick="sortUsers('created')">Created ${usersSort.key==='created'?(usersSort.dir>0?'↑':'↓'):''}</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+          ${list.map(u=>{
+            const d = divisionById(u.division);
+            return `<tr>
+              <td><input type="checkbox" ${selectedUserIds.has(u.id)?'checked':''} onchange="toggleUser('${u.id}', this.checked)"></td>
+              <td>
+                <div class="cellUser">
+                  <div class="miniAv" style="background:${initialsColor(u.name)}">${u.initials}</div>
+                  <div><div class="rowName">${u.name}</div><div class="rowEmail">${u.email}</div></div>
+                </div>
+              </td>
+              <td><span class="divBadge"><span class="divDot" style="background:${d.color}"></span>${d.name}</span></td>
+              <td>${u.title}</td>
+              <td><span class="badge badge-${u.status.toLowerCase()}">${u.status}</span></td>
+              <td>${u.created}</td>
+              <td>
+                <div class="actionsCell">
+                  <button class="iconBtn" onclick="openUserPanel('${u.id}')">View</button>
+                  <button class="iconBtn" onclick="toast('Invite resent to ${u.email}.')">Resend</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function sortUsers(key){
+  if(usersSort.key===key) usersSort.dir *= -1; else { usersSort.key=key; usersSort.dir=1; }
+  renderUsersPage(document.getElementById('main'));
+}
+function toggleUser(id, checked){
+  if(checked) selectedUserIds.add(id); else selectedUserIds.delete(id);
+  renderUsersPage(document.getElementById('main'));
+}
+function toggleAllUsers(checked){
+  const list = getFilteredSortedUsers();
+  if(checked) list.forEach(u=>selectedUserIds.add(u.id)); else selectedUserIds.clear();
+  renderUsersPage(document.getElementById('main'));
+}
+function bulkAction(kind){
+  const n = selectedUserIds.size;
+  if(kind==='deactivate'){
+    USERS.forEach(u=>{ if(selectedUserIds.has(u.id)) u.status='Deactivated'; });
+    toast(`${n} user${n===1?'':'s'} deactivated.`);
+  } else if(kind==='invite'){
+    toast(`Invite emails resent to ${n} user${n===1?'':'s'}.`);
+  } else {
+    toast(`Exported ${n} user${n===1?'':'s'} to CSV.`);
+  }
+  selectedUserIds.clear();
+  renderUsersPage(document.getElementById('main'));
+}
+
+/* -------- user detail slide-over -------- */
+function openUserPanel(id){
+  openPanel = {type:'user', id};
+  renderPanel();
+  document.getElementById('overlay').classList.add('show');
+}
+function closePanel(){
+  document.getElementById('overlay').classList.remove('show');
+  openPanel = null;
+}
+function renderPanel(){
+  if(!openPanel) return;
+  const el = document.getElementById('panelContent');
+  if(openPanel.type==='user'){
+    const u = userById(openPanel.id);
+    const history = AUDIT.filter(a=>a.target===u.name);
+    el.innerHTML = `
+      <div class="panelHead"><h3>${u.name}</h3><button class="closeX" onclick="closePanel()">&times;</button></div>
+
+      <div class="sectionLbl">Account</div>
+      <div class="fieldRow">
+        <div class="field"><label>Full name</label><input id="pf_name" value="${u.name}"></div>
+        <div class="field"><label>Email</label><input id="pf_email" value="${u.email}"></div>
+      </div>
+      <div class="fieldRow">
+        <div class="field"><label>Division</label>
+          <select id="pf_division">${DIVISIONS.map(d=>`<option value="${d.id}" ${d.id===u.division?'selected':''}>${d.name}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Role</label>
+          <select id="pf_role"><option ${u.role==='User'?'selected':''}>User</option><option ${u.role==='Admin'?'selected':''}>Admin</option></select>
+        </div>
+      </div>
+      <div class="fieldRow">
+        <div class="field"><label>Title</label><input id="pf_title" value="${u.title}"></div>
+        <div class="field"><label>Status</label>
+          <select id="pf_status"><option ${u.status==='Active'?'selected':''}>Active</option><option ${u.status==='Invited'?'selected':''}>Invited</option><option ${u.status==='Deactivated'?'selected':''}>Deactivated</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveUserPanel('${u.id}')">Save changes</button>
+
+      <div class="sectionLbl">QR code</div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div id="panelQr"></div>
+        <div style="font-size:12px; color:var(--ink-soft);">Links to<br><span style="font-family:'IBM Plex Mono',monospace;">cards.nepean.com/u/${slugify(u.name)}</span></div>
+      </div>
+
+      <div class="sectionLbl">Audit history</div>
+      ${history.length ? history.map(a=>`
+        <div class="auditItem"><span class="who">${a.actor}</span> — ${a.action}${a.field!=='—'?` (${a.field}: "${a.old}" → "${a.new}")`:''}<div class="when">${a.ts}</div></div>
+      `).join('') : '<div class="noRows">No recorded changes for this user yet.</div>'}
+    `;
+    setTimeout(()=>{
+      const box = document.getElementById('panelQr');
+      if(box) new QRCode(box, { text:`https://cards.nepean.com/u/${slugify(u.name)}`, width:84, height:84, colorDark:'#1C2430', colorLight:'#ffffff' });
+    },0);
+  }
+  if(openPanel.type==='division'){
+    renderDivisionPanel(openPanel.id);
+  }
+}
+function saveUserPanel(id){
+  const u = userById(id);
+  const oldTitle = u.title;
+  u.name = document.getElementById('pf_name').value;
+  u.email = document.getElementById('pf_email').value;
+  u.division = document.getElementById('pf_division').value;
+  u.role = document.getElementById('pf_role').value;
+  u.title = document.getElementById('pf_title').value;
+  u.status = document.getElementById('pf_status').value;
+  if(oldTitle !== u.title){
+    AUDIT.unshift({actor:ADMIN.name, target:u.name, action:'Changed title', field:'title', old:oldTitle, new:u.title, ts:'2026-09-08 (just now)'});
+  }
+  toast('User saved.');
+  closePanel();
+  renderUsersPage(document.getElementById('main'));
+}
+function slugify(name){ return name.toLowerCase().replace(/[^a-z]+/g,'-').replace(/(^-|-$)/g,''); }
+
+/* =====================================================================
+   ADMIN — DIVISIONS
+   ===================================================================== */
+function renderDivisionsPage(main){
+  main.innerHTML = `
+    <div class="pageHead">
+      <div><h2>Divisions</h2><div class="sub">Branding, default location/language, and background image galleries.</div></div>
+      <button class="btn btn-primary" onclick="toast('This would open \\'Create division\\' (name, HQ, language, logo, brand color).')">+ Add division</button>
+    </div>
+    <div class="divGrid">
+      ${DIVISIONS.map(d=>{
+        const count = USERS.filter(u=>u.division===d.id).length;
+        return `<div class="divCard" onclick="openDivisionPanel('${d.id}')">
+          <div class="divCardTop" style="background:${d.color}"></div>
+          <div class="divCardLogo"><img src="${d.logoImg}" alt="${d.name} logo"></div>
+          <div class="divCardBody">
+            <h4>${d.name}</h4>
+            <div class="meta">${d.hq} · ${d.language}</div>
+            <div class="count">${count} employee${count===1?'':'s'}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+function openDivisionPanel(id){
+  openPanel = {type:'division', id};
+  renderPanel();
+  document.getElementById('overlay').classList.add('show');
+}
+function renderDivisionPanel(id){
+  const d = divisionById(id);
+  const el = document.getElementById('panelContent');
+  el.innerHTML = `
+    <div class="panelHead"><h3>${d.name}</h3><button class="closeX" onclick="closePanel()">&times;</button></div>
+
+    <div class="sectionLbl">Division details</div>
+    <div class="field"><label>Division name</label><input id="df_name" value="${d.name}"></div>
+    <div class="fieldRow">
+      <div class="field"><label>HQ / default location</label><input id="df_hq" value="${d.hq}"></div>
+      <div class="field"><label>Display language</label>
+        <select id="df_lang"><option ${d.language==='English'?'selected':''}>English</option><option ${d.language==='Dutch'?'selected':''}>Dutch</option><option ${d.language==='Portuguese'?'selected':''}>Portuguese</option></select>
+      </div>
+    </div>
+    <div class="fieldRow">
+      <div class="field"><label>Brand color</label><input type="color" id="df_color" value="${d.color}" style="height:40px; padding:4px;"></div>
+      <div class="field"><label>Logo</label>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:40px; height:40px; border-radius:8px; background:#fff; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; padding:5px; flex-shrink:0;"><img src="${d.logoImg}" alt="" style="max-width:100%; max-height:100%; object-fit:contain;"></div>
+          <button class="btn btn-ghost" style="height:40px; flex:1;" onclick="toast('Logo upload would replace the ${d.name} mark for every card in this division instantly.')">Upload new logo…</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveDivisionPanel('${d.id}')">Save changes</button>
+
+    <div class="sectionLbl">Background image gallery</div>
+    <div class="formSectionSub">Employees in ${d.name} can only choose from images assigned here.</div>
+    <div class="bgGrid">
+      ${d.backgrounds.map(bg=>`
+        <div class="bgTile ${bg.id===d.defaultBg?'isDefault':''}">
+          ${bg.id===d.defaultBg?'<span class="defStar">DEFAULT</span>':''}
+          <div class="bgSwatch" style="background:${bg.css}"></div>
+          <div class="bgTileFoot">
+            <span>${bg.name}</span>
+            ${bg.id===d.defaultBg ? '' : `<button onclick="setDivisionDefaultBg('${d.id}','${bg.id}')">Set default</button>`}
+          </div>
+        </div>
+      `).join('')}
+      <div class="bgTile" style="border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; min-height:100px; cursor:pointer;" onclick="addDivisionBg('${d.id}')">
+        <span style="font-size:12px; color:var(--ink-faint);">+ Upload image</span>
+      </div>
+    </div>
+  `;
+}
+function saveDivisionPanel(id){
+  const d = divisionById(id);
+  d.name = document.getElementById('df_name').value;
+  d.hq = document.getElementById('df_hq').value;
+  d.language = document.getElementById('df_lang').value;
+  d.color = document.getElementById('df_color').value;
+  toast('Division saved.');
+  closePanel();
+  renderDivisionsPage(document.getElementById('main'));
+}
+function setDivisionDefaultBg(divId, bgId){
+  const d = divisionById(divId);
+  d.defaultBg = bgId;
+  toast('Default background updated for ' + d.name + '.');
+  renderDivisionPanel(divId);
+}
+function addDivisionBg(divId){
+  const d = divisionById(divId);
+  const name = prompt('Name this background image (demo — a placeholder gradient will represent the upload):', 'New background');
+  if(!name) return;
+  const hue = Math.floor(Math.random()*360);
+  const newBg = { id:'bg_'+Date.now(), name, css:`linear-gradient(135deg, hsl(${hue} 45% 70%), hsl(${hue} 45% 40%))` };
+  d.backgrounds.push(newBg);
+  toast('Background image added to ' + d.name + "'s gallery.");
+  renderDivisionPanel(divId);
+}
+
+/* =====================================================================
+   ADMIN — ANALYTICS / CONTACTS / CRM  (Phase 2 previews)
+   ===================================================================== */
+function renderAnalyticsPage(main){
+  main.innerHTML = `
+    <div class="pageHead"><div><h2>Analytics</h2><div class="sub">Scan tracking and usage reporting.</div></div></div>
+    <div class="phase2Banner">Phase 2 — confirmed out of scope for launch (§12, item 6). Shown here as a design preview only.</div>
+    <div class="statGrid">
+      <div class="statCard"><div class="num">${USERS.filter(u=>u.status==='Active').length}</div><div class="lbl">Active cards</div></div>
+      <div class="statCard"><div class="num">2</div><div class="lbl">Cards created this month</div></div>
+      <div class="statCard"><div class="num">—</div><div class="lbl">QR scans (tracking disabled)</div></div>
+      <div class="statCard"><div class="num">—</div><div class="lbl">Save-to-contacts rate</div></div>
+    </div>
+  `;
+}
+function renderContactsPage(main){
+  main.innerHTML = `
+    <div class="pageHead"><div><h2>Collected contacts</h2><div class="sub">External contacts collected by employees, routed to each division's CRM.</div></div></div>
+    <div class="phase2Banner">Phase 2 — scan/vCard/CSV/manual collection is planned, not built yet. Shown as a design preview.</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Name</th><th>Company</th><th>Source</th><th>Collected by</th><th>Division</th><th>CRM status</th><th></th></tr></thead>
+        <tbody>
+          ${COLLECTED_CONTACTS.map(c=>`
+            <tr>
+              <td class="rowName">${c.name}</td><td>${c.company}</td><td>${c.source}</td><td>${c.by}</td><td>${c.division}</td>
+              <td><span class="badge badge-${c.status==='Sent'?'active':c.status==='Pending'?'invited':'deactivated'}">${c.status}</span></td>
+              <td>${c.status==='Failed'?'<button class="iconBtn" onclick="toast(\'Retry queued.\')">Retry</button>':''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function renderCrmPage(main){
+  main.innerHTML = `
+    <div class="pageHead"><div><h2>CRM settings</h2><div class="sub">Per-division CRM connection for routing collected contacts.</div></div></div>
+    <div class="phase2Banner">Phase 2 — open item: which CRM(s) each division uses, and API vs. CSV-export fallback (§12).</div>
+    <div class="card cardPad" style="opacity:0.6;">
+      ${DIVISIONS.map(d=>`
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div><span class="divBadge"><span class="divDot" style="background:${d.color}"></span>${d.name}</span></div>
+          <select disabled style="padding:7px 10px; border:1px solid var(--border); border-radius:6px;"><option>Not configured</option></select>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* =====================================================================
+   USER DASHBOARD
+   ===================================================================== */
+function renderUserMain(){
+  const main = document.getElementById('main');
+  const u = userById(currentUserId);
+  const d = divisionById(u.division);
+  if(userNav==='profile'){
+    main.innerHTML = `
+      <div class="pageHead"><div><h2>Edit profile</h2><div class="sub">Changes save instantly to your public card.</div></div></div>
+      <div class="userGrid">
+        <div class="card cardPad">
+          <div class="photoRow">
+            <div class="photoBig">${u.initials}</div>
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Photo upload would replace this headshot (JPG/PNG/WEBP, max 5MB).')">Change photo</button>
+              <div class="lockNote">Auto-cropped to square. Max 5MB.</div>
+            </div>
+          </div>
+
+          <div class="sectionLbl">Identity</div>
+          <div class="fieldRow">
+            <div class="field"><label>Full name</label><div class="lockedField">${u.name}</div><div class="lockNote">🔒 Locked by your admin</div></div>
+            <div class="field"><label>Email</label><div class="lockedField">${u.email}</div><div class="lockNote">🔒 Your login identity</div></div>
+          </div>
+          <div class="fieldRow">
+            <div class="field"><label>Job title</label><input id="uf_title" value="${u.title}" oninput="livePreview()"></div>
+            <div class="field"><label>Pronouns (optional)</label><input id="uf_pronouns" value="${u.pronouns||''}" placeholder="e.g. she/her" oninput="livePreview()"></div>
+          </div>
+
+          <div class="sectionLbl">Phone numbers</div>
+          <div class="phoneRow">
+            <div class="field"><label>Office</label><input id="uf_office" value="${u.phones.office}" placeholder="—" oninput="livePreview()"></div>
+            <div class="field"><label>Desk</label><input id="uf_desk" value="${u.phones.desk}" placeholder="—" oninput="livePreview()"></div>
+            <div class="field"><label>Cell</label><input id="uf_cell" value="${u.phones.cell}" placeholder="—" oninput="livePreview()"></div>
+          </div>
+          <div class="lockNote">Blank numbers never appear on your public card.</div>
+
+          <div class="sectionLbl">Office address</div>
+          <div class="field"><input id="uf_address" value="${u.address}" oninput="livePreview()"></div>
+          <div class="lockNote">Office/business address only — home addresses are never collected.</div>
+
+          <div class="sectionLbl">Card background</div>
+          <div class="formSectionSub">Choose from images ${d.name} has made available. Your division's logo is fixed.</div>
+          <div class="bgPickRow" id="bgPickRow">
+            ${d.backgrounds.map(bg=>`
+              <div class="bgPick ${(u.bgId||d.defaultBg)===bg.id?'selected':''}" style="background:${bg.css}" title="${bg.name}${bg.id===d.defaultBg?' (division default)':''}" onclick="pickBackground('${bg.id}')">
+                ${(u.bgId||d.defaultBg)===bg.id?'<span class="check">✓</span>':''}
+              </div>
+            `).join('')}
+          </div>
+
+          <div style="margin-top:22px;">
+            <button class="btn btn-primary" onclick="saveUserProfile()">Save changes</button>
+          </div>
+        </div>
+
+        <div class="previewStickyWrap">
+          ${renderCardPreviewHTML(u,d,true)}
+        </div>
+      </div>
+    `;
+  } else {
+    main.innerHTML = `
+      <div class="pageHead"><div><h2>My card &amp; QR code</h2><div class="sub">Share this to hand out your info instantly.</div></div></div>
+      <div class="userGrid">
+        <div class="card cardPad">
+          <div class="formSectionTitle">Your public card</div>
+          <div class="formSectionSub">Anyone with the link or QR code sees this — no login required.</div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; word-break:break-all;">
+            https://cards.nepean.com/u/${slugify(u.name)}
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn btn-ghost btn-sm" onclick="toast('Link copied.')">Copy link</button>
+            <button class="btn btn-ghost btn-sm" onclick="openPublicView()">Preview public view</button>
+          </div>
+          <div class="qrBox">
+            <div id="mainQr"></div>
+            <div class="qrTargetUrl">Encodes the URL above — stable even if your details change later.</div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+              <button class="btn btn-ghost btn-sm" onclick="toast('Downloaded QR as PNG.')">Download PNG</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Downloaded QR as SVG.')">Download SVG</button>
+            </div>
+          </div>
+        </div>
+        <div class="previewStickyWrap">${renderCardPreviewHTML(u,d,false)}</div>
+      </div>
+    `;
+    setTimeout(()=>{
+      const box = document.getElementById('mainQr');
+      if(box) new QRCode(box, { text:`https://cards.nepean.com/u/${slugify(u.name)}`, width:140, height:140, colorDark:'#1C2430', colorLight:'#ffffff' });
+    },0);
+  }
+}
+
+function pickBackground(bgId){
+  const u = userById(currentUserId);
+  const d = divisionById(u.division);
+  u.bgId = (bgId === d.defaultBg) ? null : bgId; // null = "follow division default"
+  renderUserMain();
+}
+function saveUserProfile(){
+  const u = userById(currentUserId);
+  u.title = document.getElementById('uf_title').value;
+  u.pronouns = document.getElementById('uf_pronouns').value;
+  u.phones.office = document.getElementById('uf_office').value;
+  u.phones.desk = document.getElementById('uf_desk').value;
+  u.phones.cell = document.getElementById('uf_cell').value;
+  u.address = document.getElementById('uf_address').value;
+  toast('Profile saved — your public card is updated.');
+}
+function livePreview(){
+  const u = userById(currentUserId);
+  const d = divisionById(u.division);
+  const draft = {
+    ...u,
+    title: document.getElementById('uf_title').value,
+    pronouns: document.getElementById('uf_pronouns').value,
+    phones: {
+      office: document.getElementById('uf_office').value,
+      desk: document.getElementById('uf_desk').value,
+      cell: document.getElementById('uf_cell').value,
+    },
+    address: document.getElementById('uf_address').value
+  };
+  const wrap = document.querySelector('.previewStickyWrap');
+  if(wrap) wrap.innerHTML = renderCardPreviewHTML(draft, d, true);
+}
+
+const SOCIAL_ICONS = {
+  linkedin:'<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5.01A2.5 2.5 0 014.98 3.5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.53-1 1.8-2 3.7-2 4 0 4.7 2.6 4.7 6V21h-4v-5.3c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V21H9z"/></svg>',
+  facebook:'<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H17V3.7C16.6 3.65 15.4 3.5 14 3.5c-2.9 0-4.9 1.77-4.9 5.02V9.9H6.4V13h2.7v8z"/></svg>',
+  instagram:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.7" fill="currentColor" stroke="none"/></svg>',
+  x:'<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M4 3h4.2l4 5.4L16.8 3H20l-6.4 8.2L20.5 21h-4.2l-4.4-5.9L6.2 21H3l6.8-8.7z"/></svg>'
+};
+const SAVE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3.2-3.2M17 17H6l3.2 3.2"/></svg>';
+
+function renderCardPreviewHTML(u, d, showEditHint){
+  const bg = d.backgrounds.find(b=>b.id===(u.bgId||d.defaultBg));
+  const phoneRows = [
+    {val:u.phones.office}, {val:u.phones.desk}, {val:u.phones.cell}
+  ].filter(p=>p.val);
+  return `
+    <div class="cardCaption">${d.name.toUpperCase().startsWith('NEPEAN') ? d.name : 'NEPEAN ' + d.name}</div>
+    <div class="cardPreviewFrame">
+      <div class="digitalCard">
+        <div class="dcBg" style="background:${bg.css}">
+          <div class="dcPhoto">${u.initials}</div>
+        </div>
+        <div class="dcBody">
+          <div class="dcNameRow"><h3>${u.name}</h3>${u.pronouns ? `<span class="dcPronouns">${u.pronouns}</span>` : ''}</div>
+          <div class="title">${u.title}</div>
+          <div class="dcRows">
+            ${phoneRows.length ? phoneRows.map(p=>`<div class="dcRow">${p.val}</div>`).join('') : ''}
+            <div class="dcRow">${u.email}</div>
+          </div>
+          <div class="dcSocialRow">
+            <button class="dcSocialBtn" onclick="toast('Would open LinkedIn profile.')">${SOCIAL_ICONS.linkedin}</button>
+            <button class="dcSocialBtn" onclick="toast('Would open Facebook page.')">${SOCIAL_ICONS.facebook}</button>
+            <button class="dcSocialBtn" onclick="toast('Would open Instagram profile.')">${SOCIAL_ICONS.instagram}</button>
+            <button class="dcSocialBtn" onclick="toast('Would open X profile.')">${SOCIAL_ICONS.x}</button>
+          </div>
+          <div class="dcActions">
+            <button class="dcSaveBtn" onclick="toast('Downloaded ${u.name.split(' ')[0]}.vcf')">Save contact ${SAVE_ICON}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${showEditHint ? '<div class="noLoginNote">Live preview — updates as you type</div>' : ''}
+  `;
+}
+
+/* -------- fullscreen "no login" public view -------- */
+function openPublicView(){
+  const u = userById(currentUserId);
+  const d = divisionById(u.division);
+  document.getElementById('publicCardWrap').innerHTML = renderCardPreviewHTML(u,d,false) + '<div class="noLoginNote">This is exactly what a visitor sees after scanning the QR code — no account needed.</div>';
+  document.getElementById('publicOverlay').classList.add('show');
+}
+function closePublicView(){
+  document.getElementById('publicOverlay').classList.remove('show');
+}
+
+/* Enter key on login fields */
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['loginEmail','loginPassword'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
+  });
+});
+</script>
+</body>
+</html>

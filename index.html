@@ -272,6 +272,7 @@
 
   /* ---------- User dashboard ---------- */
   .userGrid{display:grid; grid-template-columns:1fr 380px; gap:22px; align-items:start;}
+  .userGrid > *{min-width:0;}
   @media(max-width:980px){.userGrid{grid-template-columns:1fr;}}
   .formSectionTitle{font-size:15px; margin-bottom:2px;}
   .formSectionSub{color:var(--ink-soft); font-size:12.5px; margin-bottom:16px;}
@@ -285,8 +286,8 @@
   .bgPick .check{position:absolute; top:3px; right:3px; background:var(--accent); color:#fff; width:14px; height:14px; border-radius:50%; font-size:9px; display:flex; align-items:center; justify-content:center;}
 
   /* card preview */
-  .previewStickyWrap{position:sticky; top:14px; width:380px; max-width:100%;}
-  .cardPreviewFrame{width:380px; max-width:100%; border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; background:var(--surface); box-shadow:var(--shadow);}
+  .previewStickyWrap{position:sticky; top:14px; width:100%; max-width:380px;}
+  .cardPreviewFrame{width:100%; max-width:380px; border:1px solid var(--border); border-radius:var(--radius-l); overflow:hidden; background:var(--surface); box-shadow:var(--shadow);}
   .digitalCard{padding:0;}
   .cardCaption{font-weight:700; font-size:13.5px; color:var(--ink); margin-bottom:10px; padding-left:2px;}
   .dcBg{height:190px; position:relative; background-size:cover; background-position:center;}
@@ -321,7 +322,7 @@
   .publicOverlay{position:fixed; inset:0; background:#F4F5F0; z-index:800; display:none; overflow-y:auto;}
   .publicOverlay.show{display:block;}
   .publicTopBar{display:flex; justify-content:space-between; align-items:center; padding:14px 22px; border-bottom:1px solid var(--border); background:var(--surface);}
-  .publicWrap{max-width:380px; margin:34px auto; padding:0 16px;}
+  .publicWrap{max-width:412px; margin:34px auto; padding:0 16px;}
   .noLoginNote{text-align:center; color:var(--ink-faint); font-size:11.5px; margin-top:16px;}
 
   @media(max-width:760px){
